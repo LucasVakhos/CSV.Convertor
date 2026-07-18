@@ -1,12 +1,38 @@
 ﻿<Window x:Class="CSV.Convertor.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:CSV.Convertor"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="CSV to EXCEL" Height="300" Width="500"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
+        <TextBlock Grid.Row="0" Text="CSV to EXCEL" FontSize="24" FontWeight="Bold" 
+                   HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+        <Button Grid.Row="1" Name="btnLoad" Content="📂 Загрузить CSV" FontSize="16" 
+                Padding="20,10" HorizontalAlignment="Center" Click="BtnLoad_Click" 
+                Width="200" Margin="0,0,0,20"/>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+            <ProgressBar Name="progressBar" Width="423" Height="25" Minimum="0" Maximum="100" 
+                         Value="0" Margin="0,0,10,0"/>
+            <TextBlock Name="lblProgress" Text="0%" FontSize="14" VerticalAlignment="Center" Width="40"/>
+        </StackPanel>
+
+        <TextBlock Grid.Row="3" Name="lblStatus" Text="Готов к работе" FontSize="12" 
+                   Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+            <Button Name="btnOpenXlsx" Content="📂 Открыть XLSX" FontSize="14" 
+                    Padding="15,8" Click="BtnOpenXlsx_Click" Margin="0,0,15,0"/>
+            <Button Name="btnExit" Content="❌ Выход" FontSize="14" 
+                    Padding="15,8" Click="BtnExit_Click"/>
+        </StackPanel>
     </Grid>
 </Window>

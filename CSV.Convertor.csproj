@@ -15,4 +15,8 @@
     <Page Remove="_zip\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="EPPlus" Version="7.4.2" />
+  </ItemGroup>
+
 </Project>
