@@ -4,11 +4,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace CSV.Convertor
 {
     public partial class MainWindow : Window
     {
+        private string? lastConvertedFile = null;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -24,18 +27,31 @@ namespace CSV.Convertor
 
             if (openDlg.ShowDialog() != true) return;
 
+            await ConvertFile(openDlg.FileName);
+        }
+
+        private async Task ConvertFile(string csvPath)
+        {
             try
             {
                 btnLoad.IsEnabled = false;
+                btnOpenXlsx.IsEnabled = false;
+                btnExit.IsEnabled = false;
+
                 progressBar.Value = 0;
                 lblProgress.Text = "0%";
                 lblStatus.Text = "Конвертация...";
 
-                string exeDirectory = AppDomain.CurrentDomain.BaseDirectory;
-                string outputDirectory = Path.Combine(exeDirectory, "output");
+                // Получаем разделитель из интерфейса
+                char? delimiter = GetSelectedDelimiter();
+
+                // Используем папку «Документы» пользователя, чтобы избежать проблем
+                // с правами записи при установке приложения в Program Files
+                string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                string outputDirectory = Path.Combine(documentsPath, "CSV.Convertor", "output");
                 Directory.CreateDirectory(outputDirectory);
 
-                string originalFileName = Path.GetFileNameWithoutExtension(openDlg.FileName);
+                string originalFileName = Path.GetFileNameWithoutExtension(csvPath);
                 string xlsxPath = Path.Combine(outputDirectory, $"{originalFileName}.xlsx");
 
                 var progress = new Progress<int>(p =>
@@ -44,12 +60,42 @@ namespace CSV.Convertor
                     lblProgress.Text = $"{p}%";
                 });
 
-                await Task.Run(() => CsvConverter.Convert(openDlg.FileName, xlsxPath, progress));
+                await Task.Run(() => CsvConverter.Convert(csvPath, xlsxPath, delimiter, progress!));
+
+                lastConvertedFile = xlsxPath;
 
                 lblStatus.Text = $"✅ Готово! Файл сохранён: {Path.GetFileName(xlsxPath)}";
-                MessageBox.Show($"Конвертация завершена!\nФайл сохранён:\n{xlsxPath}", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                OpenFile(xlsxPath);
+                var result = MessageBox.Show(
+                    $"Конвертация завершена!\nФайл сохранён:\n{xlsxPath}\n\nХотите конвертировать ещё один файл?",
+                    "Успех",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    OpenFile(xlsxPath);
+
+                    var openDlg = new OpenFileDialog
+                    {
+                        Filter = "CSV файлы (*.csv)|*.csv",
+                        Title = "Выберите следующий CSV файл для конвертации"
+                    };
+
+                    if (openDlg.ShowDialog() == true)
+                    {
+                        await ConvertFile(openDlg.FileName);
+                    }
+                    else
+                    {
+                        Environment.Exit(0);
+                    }
+                }
+                else
+                {
+                    OpenFile(xlsxPath);
+                    Environment.Exit(0);
+                }
             }
             catch (Exception ex)
             {
@@ -59,7 +105,24 @@ namespace CSV.Convertor
             finally
             {
                 btnLoad.IsEnabled = true;
+                btnOpenXlsx.IsEnabled = true;
+                btnExit.IsEnabled = true;
             }
+        }
+
+        private char? GetSelectedDelimiter()
+        {
+            if (chkAutoDetect.IsChecked == true)
+                return null;
+
+            if (cmbDelimiter.SelectedItem is ComboBoxItem item && item.Tag is string tag)
+            {
+                if (tag == "\\t")
+                    return '\t';
+                return tag[0];
+            }
+
+            return ';';
         }
 
         private void BtnOpenXlsx_Click(object sender, RoutedEventArgs e)
@@ -103,6 +166,12 @@ namespace CSV.Convertor
 
         private void BtnExit_Click(object sender, RoutedEventArgs e)
         {
+            Environment.Exit(0);
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
             Environment.Exit(0);
         }
     }
